@@ -1,17 +1,18 @@
-use crate::geom;
+use crate::{Marchable, Drawable};
+use crate::ray::Ray;
 use sfml;
 use sfml::graphics::{RenderWindow, Color, RenderTarget, Font, Text, Transformable};
 use sfml::window::{VideoMode, Style, Event};
 use sfml::system::{Vector2f, Clock};
 
-
 pub struct Renderer {
     canvas: RenderWindow,
-    objects: Vec<Box<dyn geom::Drawable>>
+    pub objects: Vec<Box<dyn Marchable>>,
+    pub rays: Vec<Ray>
 }
 
 impl Renderer {
-    pub fn new(w: u32, h: u32, title: Option<&str>, objects: Vec<Box<dyn geom::Drawable>>) -> Self {
+    pub fn new(w: u32, h: u32, title: Option<&str>, objects: Vec<Box<dyn Marchable>>) -> Self {
         let mut canvas = RenderWindow::new(
             VideoMode::from((w, h)),
             title.unwrap_or("Raymarch"),
@@ -23,7 +24,8 @@ impl Renderer {
 
         Self {
             canvas,
-            objects
+            objects,
+            rays: Vec::<Ray>::new()
         }
     }
 
@@ -47,9 +49,14 @@ impl Renderer {
 
             self.canvas.clear(Color::BLACK);
 
-            for i in &self.objects {
-                i.draw(&mut self.canvas);
+            for o in &self.objects {
+                o.draw(&mut self.canvas);
             }
+
+            for r in &self.rays {
+                r.draw(&mut self.canvas);
+            }
+
 
             self.canvas.draw(&fps_text);
             self.canvas.display();
