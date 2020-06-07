@@ -41,7 +41,7 @@ impl Ray {
         self.current += self.direction * d;
     }
 
-    pub fn step(&mut self, objects: &Vec<Box<dyn Marchable>>) { // Core raymarch functionality
+    pub fn step(&mut self, objects: &Vec<Box<dyn Marchable>>) -> f32 { // Core raymarch functionality
         let mut min_distance = f32::MAX;
 
         for obj in objects {
@@ -51,13 +51,22 @@ impl Ray {
             }
         }
 
-        println!("Minimal distance: {}", min_distance);
-
         self.move_along(min_distance);
+        min_distance
     }
 
-    pub fn march(&mut self) {
-        
+    pub fn march(&mut self, objects: &Vec<Box<dyn Marchable>>) { // March until min dist in very small or very big
+        'marching: loop {
+            let m_dist = self.step(objects);
+            if m_dist < 0.001 || m_dist > 10000.0 {
+                break 'marching;
+            }
+        }
+    }
+
+    pub fn reset(&mut self) {
+        self.steps.clear();
+        self.current = self.origin;
     }
 }
 

@@ -8,7 +8,8 @@ use sfml::system::{Vector2f, Clock};
 pub struct Renderer {
     canvas: RenderWindow,
     pub objects: Vec<Box<dyn Marchable>>,
-    pub rays: Vec<Ray>
+    pub rays: Vec<Ray>,
+    pub running: bool
 }
 
 impl Renderer {
@@ -25,25 +26,32 @@ impl Renderer {
         Self {
             canvas,
             objects,
-            rays: Vec::<Ray>::new()
+            rays: Vec::<Ray>::new(),
+            running: false
         }
     }
 
-    pub fn render_loop(&mut self) {
+    pub fn render_loop<F: FnMut(&mut Self, Event)>(&mut self, event_handle: &mut F) {
+
         let trace_font = Font::from_file("ARIAL.ttf").unwrap();
         let mut fps_text = Text::new(&0.to_string(), &trace_font, 14);
         fps_text.set_position((0.0, 0.0));
 
         let mut clock = Clock::start();
         let mut dt = 0.0_f32;
+        self.running = true;
         'running: loop {
             clock.restart();
             while let Some(ev) = self.canvas.poll_event() {
-                match ev {
-                    Event::Closed => break 'running,
-                    _ => ()
-                }
+                event_handle(self, ev);
             }
+
+            if !self.running {
+                break 'running;
+            }
+
+            self.rays[0].reset();
+            self.rays[0].march(&self.objects);
 
             fps_text.set_string(&(1_f32 / dt).round().to_string());
 
